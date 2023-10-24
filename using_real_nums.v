@@ -75,13 +75,33 @@ Inductive auto_diff_ast :=
   | Add (x y : auto_diff_ast)
   | Subtract (x y : auto_diff_ast).
 
+Inductive dual_num := mk_dual (num : R) (deriv : R).
+
+Definition constant_dual (r : R) (_ : dual_num) : dual_num :=
+  mk_dual r 0.
+
+Definition add_dual (x y : dual_num) : dual_num :=
+  match x, y with
+  | (mk_dual x_val x_deriv), (mk_dual y_val y_deriv) => mk_dual (x_val + y_val) (x_deriv + y_deriv)
+  end.
+
+(* 
+Definition my_ast : auto_diff_ast.
+
+Definition my_f : dual_num -> dual_num := eval_ast_dual my_ast.
+*)
+
+Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num :=
+  match ast with
+  | Add x_ast y_ast => add_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
+  | Var _ => _
+  | Constant x_ast c => constant_dual c (eval_ast_dual x_ast x)
+  | Subtract _ _ => _
+  end.
+
 Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R. Admitted.
 
 Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R. Admitted.
-
-Inductive dual_num := mk_dual (num : R) (deriv : R).
-
-Definition eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num. Admitted.
 
 Definition eval_value (f : dual_num -> dual_num) (x : R) : R. Admitted.
 
@@ -96,4 +116,5 @@ Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
   forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
 
 Theorem auto_differentiate_is_correct :
-  forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f. Admitted.
+  forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f.
+  Admitted.
