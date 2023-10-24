@@ -1,0 +1,11 @@
+# Coq build files
+
+*.vok
+*.glob
+*.vo
+*.vos
+
+# Haskell build files
+
+*.hi
+*.o
