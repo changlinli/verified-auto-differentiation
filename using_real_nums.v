@@ -60,3 +60,40 @@ split.
 + apply one_is_greater_than_zero.
 + intros. rewrite dist_on_same_point_is_zero. apply H.
 Qed.
+
+(* Use more standard math terminology *)
+
+Definition derivative_at_point_is (f : R -> R) (x d : R) := derivable_pt_lim f x d.
+
+Definition differentiable_at (f : R -> R) (x : R) := derivable_pt f x.
+
+Definition differentiable (f : R -> R) := derivable f.
+
+Inductive auto_diff_ast :=
+  | Var (x : R)
+  | Constant (x : auto_diff_ast) (c : R)
+  | Add (x y : auto_diff_ast)
+  | Subtract (x y : auto_diff_ast).
+
+Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R. Admitted.
+
+Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R. Admitted.
+
+Inductive dual_num := mk_dual (num : R) (deriv : R).
+
+Definition eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num. Admitted.
+
+Definition eval_value (f : dual_num -> dual_num) (x : R) : R. Admitted.
+
+Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R. Admitted.
+
+Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
+  exists ast : auto_diff_ast, eval_ast_dual ast = f.
+
+Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
+  let f := eval_value f_dual in
+  let f' := eval_derivative f_dual in
+  forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
+
+Theorem auto_differentiate_is_correct :
+  forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f. Admitted.
