@@ -27,4 +27,4 @@ Extract Inlined Constant INR => "Prelude.fromIntegral".
 
 Open Scope R.
 
-Extraction "haskell/generated/Internal.hs" add_dual.
+Extraction "haskell/generated/ToyVerifiedAutomaticDifferentiation/Internal.hs" add_dual eval_derivative.

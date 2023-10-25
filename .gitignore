@@ -4,6 +4,7 @@
 *.glob
 *.vo
 *.vos
+*.aux
 
 # Haskell build files
 
