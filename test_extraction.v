@@ -1,96 +1,30 @@
 Require Coq.extraction.Extraction.
+Require Import VerifiedAutoDiff.
 Extraction Language Haskell.
 
-Require Import Coq.Floats.PrimFloat.
+(* Adapted from https://github.com/inQWIRE/SQIR/blob/a76b448bf2d922ec9f495ca3f599534d0437cda5/examples/ghz/extraction/ExtrOcamlR.v#L4 *)
 
-Extract Constant float => "Prelude.Float".
+Require Import Reals.
 
-Definition zerof : float := 0.0.
+Extract Constant R => "Prelude.Double".
+Extract Inlined Constant R0 => "0.0".
+Extract Inlined Constant R1 => "1.0".
+Extract Inlined Constant Rplus => "( Prelude.+ )".
+Extract Inlined Constant Rmult => "( Prelude.* )".
+Extract Inlined Constant Ropp => "((Prelude.-) 0.0)".
+Extract Inlined Constant Rinv => "((Prelude./) 1.0)".
+Extract Inlined Constant Rminus => "( Prelude.- )".
+Extract Inlined Constant Rdiv => "( Prelude./ )".
+Extract Inlined Constant pow => "(\ a b -> a Prelude.** b)".
+Extract Inlined Constant cos => "Prelude.cos".
+Extract Inlined Constant sin => "Prelude.sin".
+Extract Inlined Constant tan => "Prelude.tan".
+Extract Inlined Constant atan => "Prelude.atan".
+Extract Inlined Constant acos => "Prelude.acos".
+Extract Inlined Constant PI => "Prelude.pi".
+Extract Inlined Constant IZR => "Prelude.fromIntegral".
+Extract Inlined Constant INR => "Prelude.fromIntegral".
 
-Definition onef : float := 1.0.
+Open Scope R.
 
-Extract Constant zerof => "0.0".
-
-Extract Constant onef => "1.0".
-
-Record dual : Set :=
-  { x_value : float
-  ; derivative_value : float
-  }.
-
-Definition dual_to_float (d : dual) : float :=
-  x_value d.
-
-Definition constant(x : float) : dual :=
-  {| x_value := x; derivative_value := zerof |}.
-
-Definition identity(x : float) : dual :=
-  {| x_value := x; derivative_value := onef |}.
-
-Definition add_dual(x y : dual) : dual :=
-  {| x_value := (x_value x) + (x_value y)
-  ;  derivative_value := (derivative_value x) + (derivative_value y)
-  |}.
-
-Definition multi_dual(x y : dual) : dual :=
-  {| x_value := (x_value x) * (x_value y)
-  ;  derivative_value := (derivative_value x) * (x_value y) + (derivative_value y) * (x_value x)
-  |}.
-
-Definition eval_dual(f : dual -> dual)(x : float) : float :=
-  x_value (f ({| x_value := x; derivative_value := 1 |})).
-
-Definition eval_deriv_dual(f : dual -> dual)(x : float) : float :=
-  derivative_value (f ({| x_value := x; derivative_value := 1 |})).
-
-Definition times_two(x : dual) : dual :=
-  multi_dual (constant 2) x.
-
-Definition two : float :=
-  1.0 + 1.0.
-
-Example trivial_example : 1 + 1 = 2.
-Proof.
-simpl. reflexivity.
-Qed.
-
-Example derivative_of_times_two_is_two : eval_deriv_dual times_two 4 = two.
-Proof.
-reflexivity.
-Qed.
-
-Definition multi_by_constant(c : float)(x : dual) : dual :=
-  multi_dual x (constant c).
-
-Lemma one_times_anything_is_itself : forall x : float, mul 1 x = x.
-Proof.
-Admitted.
-
-Lemma zero_times_anything_is_zero : forall x : float, mul zerof x = zerof.
-Proof.
-Admitted.
-
-Lemma adding_zero_itself : forall x : float, add x 0 = x.
-Proof.
-Admitted.
-
-Theorem derivative_of_multi_by_constant_is_just_constant
-  : forall x c : float, eval_deriv_dual (multi_by_constant c) x = c.
-Proof.
-intros.
-unfold multi_by_constant.
-unfold eval_deriv_dual.
-simpl.
-rewrite one_times_anything_is_itself.
-rewrite zero_times_anything_is_zero.
-rewrite adding_zero_itself.
-reflexivity.
-Qed.
-
-Definition not(b : bool) : bool :=
-match b with
-| true => false
-| false => true
-end.
-
-Extraction "example.hs" identity.
+Extraction "haskell/generated/Internal.hs" add_dual.
