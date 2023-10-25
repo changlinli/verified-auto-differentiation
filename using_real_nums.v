@@ -71,6 +71,16 @@ Definition differentiable (f : R -> R) := derivable f.
 
 Inductive dual_num := mk_dual (num : R) (deriv : R).
 
+Definition dual_value (x : dual_num) : R :=
+  match x with
+  | mk_dual r _ => r
+  end.
+
+Definition dual_deriv (x : dual_num) : R :=
+  match x with
+  | mk_dual _ r => r
+  end.
+
 Inductive auto_diff_ast :=
   | Var
   | Constant (x : auto_diff_ast) (c : R)
@@ -81,14 +91,10 @@ Definition constant_dual (r : R) (_ : dual_num) : dual_num :=
   mk_dual r 0.
 
 Definition add_dual (x y : dual_num) : dual_num :=
-  match x, y with
-  | (mk_dual x_val x_deriv), (mk_dual y_val y_deriv) => mk_dual (x_val + y_val) (x_deriv + y_deriv)
-  end.
+  mk_dual (dual_value x + dual_value y) (dual_deriv x + dual_deriv y).
 
 Definition subtract_dual (x y : dual_num) : dual_num :=
-  match x, y with
-  | (mk_dual x_val x_deriv), (mk_dual y_val y_deriv) => mk_dual (x_val - y_val) (x_deriv - y_deriv)
-  end.
+  mk_dual (dual_value x - dual_value y) (dual_deriv x - dual_deriv y).
 
 (*
 Definition my_ast : auto_diff_ast.
@@ -110,39 +116,36 @@ Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num :=
   end.
 
 Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R :=
-  match (eval_ast_dual ast (mk_dual x 1)) with
-  | mk_dual num deriv => num
-  end.
+  dual_value (eval_ast_dual ast (mk_dual x 1)).
 
 Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R :=
-  match (eval_ast_dual ast (mk_dual x 1)) with
-  | mk_dual num deriv => deriv
-  end.
-
-Compute eval_ast_value (Add Var Var) 2.
-Compute eval_ast_derivative (Add Var Var) 2.
+  dual_deriv (eval_ast_dual ast (mk_dual x 1)).
 
 Definition eval_value (f : dual_num -> dual_num) (x : R) : R :=
-  match (f (mk_dual x 1)) with
-  | mk_dual x _ => x
-  end.
+  dual_value (f (mk_dual x 1)).
 
 Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
-  match (f (mk_dual x 1)) with
-  | mk_dual _ d => d
-  end.
+  dual_deriv (f (mk_dual x 1)).
 
 Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
   exists ast : auto_diff_ast, eval_ast_dual ast = f.
 
+
+(* Simplified version that assumes f is differentiable everywhere *)
 Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
   let f := eval_value f_dual in
   let f' := eval_derivative f_dual in
-  forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
+  forall x : R, derivative_at_point_is f x (f' x).
 
-Axiom functional_extensionality : forall {X Y: Type}
-                                    {f g : X -> Y},
-  (forall (x:X), f x = g x) -> f = g.
+(*
+More complete version that does not assume f is differentiable everywhere 
+
+Not currently used. Will need to be used if we include division.  
+*)
+Definition derivative_is_correct' (f_dual : dual_num -> dual_num) : Prop :=
+  let f := eval_value f_dual in
+  let f' := eval_derivative f_dual in
+  forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
 
 Lemma eval_value_id_is_id : eval_value (fun x => x) = id.
 Proof.
@@ -180,57 +183,83 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma eval_value_add_is_add :
+  forall f g : dual_num -> dual_num,
+  eval_value (fun x => add_dual (f x) (g x)) =
+    fun x => eval_value f x + eval_value g x.
+Proof.
+reflexivity.
+Qed.
+
+Lemma eval_deriv_add_is_add :
+  forall f g : dual_num -> dual_num,
+  eval_derivative (fun x => add_dual (f x) (g x)) =
+    fun x => eval_derivative f x + eval_derivative g x.
+Proof.
+reflexivity.
+Qed.
+
+Lemma eval_value_subtract_is_subtract :
+  forall f g : dual_num -> dual_num,
+  eval_value (fun x => subtract_dual (f x) (g x)) =
+    fun x => eval_value f x - eval_value g x.
+Proof.
+reflexivity.
+Qed.
+
+Lemma eval_deriv_subtract_is_subtract :
+  forall f g : dual_num -> dual_num,
+  eval_derivative (fun x => subtract_dual (f x) (g x)) =
+    fun x => eval_derivative f x - eval_derivative g x.
+Proof.
+reflexivity.
+Qed.
+
 Theorem auto_differentiate_is_correct :
   forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f.
 Proof.
   intros f H.
   destruct H.
+  generalize dependent H.
+  generalize dependent f.
   induction x.
   - unfold derivative_is_correct.
+    intros.
     rewrite <- H.
     simpl.
-    intros x Hdiff.
     rewrite eval_value_id_is_id.
     rewrite eval_deriv_id_is_1.
     apply derivable_pt_lim_id.
   - unfold derivative_is_correct.
+    intros.
     rewrite <- H.
     simpl.
     rewrite constant_ignores_arg.
-    intros x0 Hdiff.
     rewrite eval_value_const_is_const.
     rewrite eval_deriv_const_is_0.
     apply derivable_pt_lim_const.
-  -
-Admitted.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  - intros.
+    rewrite <- H.
+    simpl.
+    unfold derivative_is_correct.
+    unfold derivative_is_correct in IHx1.
+    unfold derivative_is_correct in IHx2.
+    intros.
+    rewrite eval_value_add_is_add.
+    rewrite eval_deriv_add_is_add.
+    pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
+    pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
+    apply (derivable_pt_lim_plus _ _ _ _ _ H0 H1).
+  - intros.
+    rewrite <- H.
+    simpl.
+    unfold derivative_is_correct.
+    unfold derivative_is_correct in IHx1.
+    unfold derivative_is_correct in IHx2.
+    intros.
+    rewrite eval_value_subtract_is_subtract.
+    rewrite eval_deriv_subtract_is_subtract.
+    pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
+    pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
+    apply (derivable_pt_lim_minus _ _ _ _ _ H0 H1).
+Qed.
