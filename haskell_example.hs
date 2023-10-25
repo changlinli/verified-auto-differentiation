@@ -56,4 +56,6 @@ instance Floating Dual where
     = Dual (logBase u v) (((log v) * u' / u - (log u) * v' / v) / ((log u) ** 2))
 
 test_f :: Dual -> Dual
-test_f x = x * 2
+test_f x = x ** 2 + 2 * x + 5
+
+-- test_f = identity . (\x -> x * 2)
