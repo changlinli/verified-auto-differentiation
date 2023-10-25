@@ -9,3 +9,9 @@
 
 *.hi
 *.o
+
+# We generate our Makefile with Coq
+
+Makefile
+Makefile.conf
+.Makefile.d
