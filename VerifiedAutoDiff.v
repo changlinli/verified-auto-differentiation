@@ -75,6 +75,7 @@ Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
 
 
 (* Simplified version that assumes f is differentiable everywhere *)
+
 Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
   let f := eval_value f_dual in
   let f' := eval_derivative f_dual in
@@ -83,7 +84,15 @@ Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
 (*
 More complete version that does not assume f is differentiable everywhere 
 
-Not currently used. Will need to be used if we include division.  
+Not currently used. Will need to be used if we include division or absolute value.
+
+This is significantly harder to prove though, even if we don't include division or absolute value functions.
+
+Why is that?
+
+Hint: consider whether it's possible for two functions that individually aren't differentiable
+at a point to combine and become differentiable there. How does that make the induction in 
+auto_differentiate_is_correct harder?
 *)
 Definition derivative_is_correct' (f_dual : dual_num -> dual_num) : Prop :=
   let f := eval_value f_dual in
