@@ -1,4 +1,5 @@
 Require Coq.extraction.Extraction.
+Require Import Coq.extraction.ExtrHaskellZInteger.
 Require Import VerifiedAutoDiff.
 Extraction Language Haskell.
 
@@ -24,7 +25,13 @@ Extract Inlined Constant acos => "Prelude.acos".
 Extract Inlined Constant PI => "Prelude.pi".
 Extract Inlined Constant IZR => "Prelude.fromIntegral".
 Extract Inlined Constant INR => "Prelude.fromIntegral".
+Extract Inlined Constant Rsignum => "Prelude.signum".
+Extract Inlined Constant Rabs => "Prelude.abs".
 
 Open Scope R.
 
-Extraction "haskell/generated/ToyVerifiedAutomaticDifferentiation/Internal.hs" add_dual eval_derivative.
+Extraction "haskell/generated/ToyVerifiedAutomaticDifferentiation/Internal.hs"
+  add_dual
+  abs_dual
+  eval_derivative
+  .

@@ -99,6 +99,13 @@ Definition cos_dual (x : dual_num) : dual_num :=
 Definition tan_dual (x : dual_num) : dual_num :=
   mk_dual (tan (dual_value x)) ((dual_deriv x) / ((cos (dual_value x)) ^ 2)).
 
+
+Definition eval_value (f : dual_num -> dual_num) (x : R) : R :=
+  dual_value (f (mk_dual x 1)).
+
+Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
+  dual_deriv (f (mk_dual x 1)).
+
 Module DifferentiableEverywhere.
 
 Inductive auto_diff_ast :=
@@ -130,11 +137,6 @@ Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R :=
 Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R :=
   dual_deriv (eval_ast_dual ast (mk_dual x 1)).
 
-Definition eval_value (f : dual_num -> dual_num) (x : R) : R :=
-  dual_value (f (mk_dual x 1)).
-
-Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
-  dual_deriv (f (mk_dual x 1)).
 
 Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
   exists ast : auto_diff_ast, eval_ast_dual ast = f.
