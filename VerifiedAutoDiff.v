@@ -108,157 +108,201 @@ Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
 
 Module DifferentiableEverywhere.
 
-Inductive auto_diff_ast :=
-  | Var
-  | Constant (x : auto_diff_ast) (c : R)
-  | Add (x y : auto_diff_ast)
-  | Subtract (x y : auto_diff_ast)
-  | Multiply (x y : auto_diff_ast)
-  | Sin (x : auto_diff_ast)
-  | Cos (x : auto_diff_ast)
-  | Tan (x : auto_diff_ast).
+  Inductive auto_diff_ast :=
+    | Var
+    | Constant (x : auto_diff_ast) (c : R)
+    | Add (x y : auto_diff_ast)
+    | Subtract (x y : auto_diff_ast)
+    | Multiply (x y : auto_diff_ast)
+    | Sin (x : auto_diff_ast)
+    | Cos (x : auto_diff_ast)
+    | Tan (x : auto_diff_ast).
 
 
-Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num :=
-  match ast with
-  | Add x_ast y_ast => add_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
-  | Var => x
-  | Constant x_ast c => constant_dual c (eval_ast_dual x_ast x)
-  | Subtract x_ast y_ast => subtract_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
-  | Multiply x_ast y_ast => multiply_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
-  | Sin x_ast => sin_dual (eval_ast_dual x_ast x)
-  | Cos x_ast => cos_dual (eval_ast_dual x_ast x)
-  | Tan x_ast => tan_dual (eval_ast_dual x_ast x)
-  end.
+  Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num :=
+    match ast with
+    | Add x_ast y_ast => add_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
+    | Var => x
+    | Constant x_ast c => constant_dual c (eval_ast_dual x_ast x)
+    | Subtract x_ast y_ast => subtract_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
+    | Multiply x_ast y_ast => multiply_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
+    | Sin x_ast => sin_dual (eval_ast_dual x_ast x)
+    | Cos x_ast => cos_dual (eval_ast_dual x_ast x)
+    | Tan x_ast => tan_dual (eval_ast_dual x_ast x)
+    end.
 
-Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R :=
-  dual_value (eval_ast_dual ast (mk_dual x 1)).
+  Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R :=
+    dual_value (eval_ast_dual ast (mk_dual x 1)).
 
-Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R :=
-  dual_deriv (eval_ast_dual ast (mk_dual x 1)).
-
-
-Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
-  exists ast : auto_diff_ast, eval_ast_dual ast = f.
+  Definition eval_ast_derivative (ast : auto_diff_ast) (x : R) : R :=
+    dual_deriv (eval_ast_dual ast (mk_dual x 1)).
 
 
-(* Simplified version that assumes f is differentiable everywhere *)
+  Definition is_well_formed (f : dual_num -> dual_num) : Prop :=
+    exists ast : auto_diff_ast, eval_ast_dual ast = f.
 
-Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
-  let f := eval_value f_dual in
-  let f' := eval_derivative f_dual in
-  forall x : R, derivative_at_point_is f x (f' x).
 
-(*
-More complete version that does not assume f is differentiable everywhere 
+  (* Simplified version that assumes f is differentiable everywhere *)
 
-Not currently used. Will need to be used if we include division or absolute value.
+  Definition derivative_is_correct (f_dual : dual_num -> dual_num) : Prop :=
+    let f := eval_value f_dual in
+    let f' := eval_derivative f_dual in
+    forall x : R, derivative_at_point_is f x (f' x).
 
-This is significantly harder to prove though, even if we don't include division or absolute value functions.
+  (*
+  More complete version that does not assume f is differentiable everywhere 
 
-Why is that?
+  Not currently used. Will need to be used if we include division or absolute value.
 
-Hint: consider whether it's possible for two functions that individually aren't differentiable
-at a point to combine and become differentiable there. How does that make the induction in 
-auto_differentiate_is_correct harder?
-*)
-Definition derivative_is_correct' (f_dual : dual_num -> dual_num) : Prop :=
-  let f := eval_value f_dual in
-  let f' := eval_derivative f_dual in
-  forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
+  This is significantly harder to prove though, even if we don't include division or absolute value functions.
 
-Theorem derivative_of_tan : forall x : R, derivative_at_point_is tan x (1 / (cos x) ^ 2).
-Admitted.
+  Why is that?
 
-Theorem multiply_by_one_is_division : forall x c : R, x * (1 / c) = x / c.
-Admitted.
+  Hint: consider whether it's possible for two functions that individually aren't differentiable
+  at a point to combine and become differentiable there. How does that make the induction in 
+  auto_differentiate_is_correct harder?
+  *)
+  Definition derivative_is_correct' (f_dual : dual_num -> dual_num) : Prop :=
+    let f := eval_value f_dual in
+    let f' := eval_derivative f_dual in
+    forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
 
-Theorem auto_differentiate_is_correct :
-  forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f.
-Proof.
-  intros f H.
-  destruct H.
-  generalize dependent H.
-  generalize dependent f.
-  induction x.
-  - unfold derivative_is_correct.
-    intros.
-    rewrite <- H.
-    simpl.
-    apply derivable_pt_lim_id.
-  - unfold derivative_is_correct.
-    intros.
-    rewrite <- H.
-    simpl.
-    apply derivable_pt_lim_const.
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    unfold derivative_is_correct in IHx1.
-    unfold derivative_is_correct in IHx2.
-    intros.
-    pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
-    pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
-    apply (derivable_pt_lim_plus _ _ _ _ _ H0 H1).
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    unfold derivative_is_correct in IHx1.
-    unfold derivative_is_correct in IHx2.
-    intros.
-    pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
-    pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
-    apply (derivable_pt_lim_minus _ _ _ _ _ H0 H1).
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    unfold derivative_is_correct in IHx1.
-    unfold derivative_is_correct in IHx2.
-    intros.
-    pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
-    pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
-    apply (derivable_pt_lim_mult _ _ _ _ _ H0 H1).
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    intros.
-    pose proof (IHx (eval_ast_dual x) eq_refl x0).
-    pose proof (derivable_pt_lim_sin (eval_value (eval_ast_dual x) x0)) as sin_deriv.
-    pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 sin_deriv) as chain_rule_deriv.
-    rewrite Rmult_comm in chain_rule_deriv.
-    apply chain_rule_deriv.
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    intros.
-    pose proof (IHx (eval_ast_dual x) eq_refl x0).
-    pose proof (derivable_pt_lim_cos (eval_value (eval_ast_dual x) x0)) as cos_deriv.
-    pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 cos_deriv) as chain_rule_deriv.
-    rewrite Rmult_comm in chain_rule_deriv.
-    apply chain_rule_deriv.
-  - intros.
-    rewrite <- H.
-    simpl.
-    unfold derivative_is_correct.
-    intros.
-    pose proof (IHx (eval_ast_dual x) eq_refl x0).
-    pose proof (derivative_of_tan (eval_value (eval_ast_dual x) x0)) as tan_deriv.
-    pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 tan_deriv) as chain_rule_deriv.
-    rewrite Rmult_comm in chain_rule_deriv.
-    rewrite multiply_by_one_is_division in chain_rule_deriv.
-    apply chain_rule_deriv.
-Qed.
+  Theorem derivative_of_tan : forall x : R, derivative_at_point_is tan x (1 / (cos x) ^ 2).
+  Admitted.
+
+  Theorem multiply_by_one_is_division : forall x c : R, x * (1 / c) = x / c.
+  Admitted.
+
+  Theorem auto_differentiate_is_correct :
+    forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f.
+  Proof.
+    intros f H.
+    destruct H.
+    generalize dependent H.
+    generalize dependent f.
+    induction x.
+    - unfold derivative_is_correct.
+      intros.
+      rewrite <- H.
+      simpl.
+      apply derivable_pt_lim_id.
+    - unfold derivative_is_correct.
+      intros.
+      rewrite <- H.
+      simpl.
+      apply derivable_pt_lim_const.
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      unfold derivative_is_correct in IHx1.
+      unfold derivative_is_correct in IHx2.
+      intros.
+      pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
+      pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
+      apply (derivable_pt_lim_plus _ _ _ _ _ H0 H1).
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      unfold derivative_is_correct in IHx1.
+      unfold derivative_is_correct in IHx2.
+      intros.
+      pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
+      pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
+      apply (derivable_pt_lim_minus _ _ _ _ _ H0 H1).
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      unfold derivative_is_correct in IHx1.
+      unfold derivative_is_correct in IHx2.
+      intros.
+      pose proof (IHx1 (eval_ast_dual x1) eq_refl x).
+      pose proof (IHx2 (eval_ast_dual x2) eq_refl x).
+      apply (derivable_pt_lim_mult _ _ _ _ _ H0 H1).
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      intros.
+      pose proof (IHx (eval_ast_dual x) eq_refl x0).
+      pose proof (derivable_pt_lim_sin (eval_value (eval_ast_dual x) x0)) as sin_deriv.
+      pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 sin_deriv) as chain_rule_deriv.
+      rewrite Rmult_comm in chain_rule_deriv.
+      apply chain_rule_deriv.
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      intros.
+      pose proof (IHx (eval_ast_dual x) eq_refl x0).
+      pose proof (derivable_pt_lim_cos (eval_value (eval_ast_dual x) x0)) as cos_deriv.
+      pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 cos_deriv) as chain_rule_deriv.
+      rewrite Rmult_comm in chain_rule_deriv.
+      apply chain_rule_deriv.
+    - intros.
+      rewrite <- H.
+      simpl.
+      unfold derivative_is_correct.
+      intros.
+      pose proof (IHx (eval_ast_dual x) eq_refl x0).
+      pose proof (derivative_of_tan (eval_value (eval_ast_dual x) x0)) as tan_deriv.
+      pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 tan_deriv) as chain_rule_deriv.
+      rewrite Rmult_comm in chain_rule_deriv.
+      rewrite multiply_by_one_is_division in chain_rule_deriv.
+      apply chain_rule_deriv.
+  Qed.
 
 End DifferentiableEverywhere.
 
 
 Module NotDifferentiableEverywhere.
 
+  Inductive auto_diff_ast :=
+    | Var
+    | Constant (x : auto_diff_ast) (c : R)
+    | Add (x y : auto_diff_ast)
+    | Abs (x : auto_diff_ast).
 
+  Definition flat_map {A B : Type} (x : option A) (f : A -> option B) : option B :=
+    match x with
+    | Some a => f a
+    | None => None
+    end.
+ 
+  Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : option dual_num :=
+    match ast with
+    | Add x_ast y_ast =>
+      flat_map
+        (eval_ast_dual x_ast x)
+        (fun x_res => flat_map (eval_ast_dual y_ast x) (fun y_res => Some (add_dual x_res y_res)))
+    | Var => Some x
+    | Constant x_ast c =>
+      flat_map
+        (eval_ast_dual x_ast x)
+        (fun x_res => Some (constant_dual c x_res))
+    | Abs x_ast =>
+      flat_map
+        (eval_ast_dual x_ast x)
+        (fun x_res => 
+            match total_order_T (dual_value x_res) 0 with
+            | inleft (left _) => Some (abs_dual x_res)
+            | inleft (right _) => None
+            | inright _ => Some (abs_dual x_res)
+            end
+        )
+  end.
+
+  Definition ast_defines_derivative_at (f : dual_num -> dual_num) (x : R) : Prop.
+    Admitted.
+
+  Definition derivative_is_correct_at (f_dual : dual_num -> dual_num) (x : R) : Prop :=
+    let f := eval_value f_dual in
+    let f' := eval_derivative f_dual in
+    derivative_at_point_is f x (f' x).
+
+  Theorem auto_differentiate_is_correct :
+    forall (f : dual_num -> dual_num) (x : R), ast_defines_derivative_at f x -> derivative_is_correct_at f x.
 
 End NotDifferentiableEverywhere.
