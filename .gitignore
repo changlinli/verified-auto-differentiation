@@ -16,3 +16,7 @@
 Makefile
 Makefile.conf
 .Makefile.d
+
+# Ignore vim swap files
+*.swp
+*.swo

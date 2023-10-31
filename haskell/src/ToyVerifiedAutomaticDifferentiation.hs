@@ -21,6 +21,11 @@ instance Num TI.Dual_num where
     signum = TI.signum_dual
     fromInteger = TI.from_integer_dual
 
+instance Fractional TI.Dual_num where
+    (/) = TI.divide_dual
+    recip = TI.recip_dual
+    fromRational = TI.from_rational
+
 newtype DualNum = DualNum { unDualNum :: TI.Dual_num }
     deriving newtype (Num)
 

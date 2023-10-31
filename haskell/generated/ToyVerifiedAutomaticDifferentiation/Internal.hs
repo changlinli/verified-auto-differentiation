@@ -1,6 +1,8 @@
 module ToyVerifiedAutomaticDifferentiation.Internal where
 
 import qualified Prelude
+import Data.Bits
+import GHC.Real
 
 __ :: any
 __ = Prelude.error "Logical or arity value used"
@@ -73,9 +75,9 @@ succ x =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p -> (\x -> 2 Prelude.* x) (succ p))
-    (\p -> (\x -> 2 Prelude.* x Prelude.+ 1) p)
-    (\_ -> (\x -> 2 Prelude.* x) 1)
+    (\p -> (\x -> shiftL x 1) (succ p))
+    (\p -> (\x -> shiftL x 1 Prelude.+ 1) p)
+    (\_ -> (\x -> shiftL x 1) 1)
     x
 
 add :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
@@ -89,27 +91,27 @@ add x y =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x) (add_carry p q))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
-      (\_ -> (\x -> 2 Prelude.* x) (succ p))
+      (\q -> (\x -> shiftL x 1) (add_carry p q))
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) (add p q))
+      (\_ -> (\x -> shiftL x 1) (succ p))
       y)
     (\p ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
-      (\q -> (\x -> 2 Prelude.* x) (add p q))
-      (\_ -> (\x -> 2 Prelude.* x Prelude.+ 1) p)
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) (add p q))
+      (\q -> (\x -> shiftL x 1) (add p q))
+      (\_ -> (\x -> shiftL x 1 Prelude.+ 1) p)
       y)
     (\_ ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x) (succ q))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) q)
-      (\_ -> (\x -> 2 Prelude.* x) 1)
+      (\q -> (\x -> shiftL x 1) (succ q))
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) q)
+      (\_ -> (\x -> shiftL x 1) 1)
       y)
     x
 
@@ -124,27 +126,27 @@ add_carry x y =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add_carry p q))
-      (\q -> (\x -> 2 Prelude.* x) (add_carry p q))
-      (\_ -> (\x -> 2 Prelude.* x Prelude.+ 1) (succ p))
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) (add_carry p q))
+      (\q -> (\x -> shiftL x 1) (add_carry p q))
+      (\_ -> (\x -> shiftL x 1 Prelude.+ 1) (succ p))
       y)
     (\p ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x) (add_carry p q))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
-      (\_ -> (\x -> 2 Prelude.* x) (succ p))
+      (\q -> (\x -> shiftL x 1) (add_carry p q))
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) (add p q))
+      (\_ -> (\x -> shiftL x 1) (succ p))
       y)
     (\_ ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (succ q))
-      (\q -> (\x -> 2 Prelude.* x) (succ q))
-      (\_ -> (\x -> 2 Prelude.* x Prelude.+ 1) 1)
+      (\q -> (\x -> shiftL x 1 Prelude.+ 1) (succ q))
+      (\q -> (\x -> shiftL x 1) (succ q))
+      (\_ -> (\x -> shiftL x 1 Prelude.+ 1) 1)
       y)
     x
 
@@ -154,8 +156,8 @@ pred_double x =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p -> (\x -> 2 Prelude.* x Prelude.+ 1) ((\x -> 2 Prelude.* x) p))
-    (\p -> (\x -> 2 Prelude.* x Prelude.+ 1) (pred_double p))
+    (\p -> (\x -> shiftL x 1 Prelude.+ 1) ((\x -> shiftL x 1) p))
+    (\p -> (\x -> shiftL x 1 Prelude.+ 1) (pred_double p))
     (\_ -> 1)
     x
 
@@ -168,13 +170,13 @@ succ_double_mask :: Mask -> Mask
 succ_double_mask x =
   case x of {
    IsNul -> IsPos 1;
-   IsPos p -> IsPos ((\x -> 2 Prelude.* x Prelude.+ 1) p);
+   IsPos p -> IsPos ((\x -> shiftL x 1 Prelude.+ 1) p);
    IsNeg -> IsNeg}
 
 double_mask :: Mask -> Mask
 double_mask x =
   case x of {
-   IsPos p -> IsPos ((\x -> 2 Prelude.* x) p);
+   IsPos p -> IsPos ((\x -> shiftL x 1) p);
    x0 -> x0}
 
 double_pred_mask :: Prelude.Integer -> Mask
@@ -183,8 +185,8 @@ double_pred_mask x =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p -> IsPos ((\x -> 2 Prelude.* x) ((\x -> 2 Prelude.* x) p)))
-    (\p -> IsPos ((\x -> 2 Prelude.* x) (pred_double p)))
+    (\p -> IsPos ((\x -> shiftL x 1) ((\x -> shiftL x 1) p)))
+    (\p -> IsPos ((\x -> shiftL x 1) (pred_double p)))
     (\_ -> IsNul)
     x
 
@@ -201,7 +203,7 @@ sub_mask x y =
                    else fO (n `Prelude.div` 2))
       (\q -> double_mask (sub_mask p q))
       (\q -> succ_double_mask (sub_mask p q))
-      (\_ -> IsPos ((\x -> 2 Prelude.* x) p))
+      (\_ -> IsPos ((\x -> shiftL x 1) p))
       y)
     (\p ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
@@ -262,8 +264,8 @@ mul x y =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p -> add y ((\x -> 2 Prelude.* x) (mul p y)))
-    (\p -> (\x -> 2 Prelude.* x) (mul p y))
+    (\p -> add y ((\x -> shiftL x 1) (mul p y)))
+    (\p -> (\x -> shiftL x 1) (mul p y))
     (\_ -> y)
     x
 
@@ -355,19 +357,17 @@ ggcdn n a b =
           case ggcdn n0 (sub b' a') a of {
            Pair g p ->
             case p of {
-             Pair ba aa -> Pair g (Pair aa
-              (add aa ((\x -> 2 Prelude.* x) ba)))}};
+             Pair ba aa -> Pair g (Pair aa (add aa ((\x -> shiftL x 1) ba)))}};
          Gt ->
           case ggcdn n0 (sub a' b') b of {
            Pair g p ->
             case p of {
-             Pair ab bb -> Pair g (Pair (add bb ((\x -> 2 Prelude.* x) ab))
-              bb)}}})
+             Pair ab bb -> Pair g (Pair (add bb ((\x -> shiftL x 1) ab)) bb)}}})
         (\b0 ->
         case ggcdn n0 a b0 of {
          Pair g p ->
           case p of {
-           Pair aa bb -> Pair g (Pair aa ((\x -> 2 Prelude.* x) bb))}})
+           Pair aa bb -> Pair g (Pair aa ((\x -> shiftL x 1) bb))}})
         (\_ -> Pair 1 (Pair a 1))
         b)
       (\a0 ->
@@ -379,10 +379,10 @@ ggcdn n a b =
         case ggcdn n0 a0 b of {
          Pair g p ->
           case p of {
-           Pair aa bb -> Pair g (Pair ((\x -> 2 Prelude.* x) aa) bb)}})
+           Pair aa bb -> Pair g (Pair ((\x -> shiftL x 1) aa) bb)}})
         (\b0 ->
         case ggcdn n0 a0 b0 of {
-         Pair g p -> Pair ((\x -> 2 Prelude.* x) g) p})
+         Pair g p -> Pair ((\x -> shiftL x 1) g) p})
         (\_ -> Pair 1 (Pair a 1))
         b)
       (\_ -> Pair 1 (Pair 1 b))
@@ -433,8 +433,8 @@ double x =
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
     (\_ -> 0)
-    (\p -> (\x -> x) ((\x -> 2 Prelude.* x) p))
-    (\p -> Prelude.negate ((\x -> 2 Prelude.* x) p))
+    (\p -> (\x -> x) ((\x -> shiftL x 1) p))
+    (\p -> Prelude.negate ((\x -> shiftL x 1) p))
     x
 
 succ_double :: Prelude.Integer -> Prelude.Integer
@@ -443,7 +443,7 @@ succ_double x =
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
     (\_ -> (\x -> x) 1)
-    (\p -> (\x -> x) ((\x -> 2 Prelude.* x Prelude.+ 1) p))
+    (\p -> (\x -> x) ((\x -> shiftL x 1 Prelude.+ 1) p))
     (\p -> Prelude.negate (pred_double p))
     x
 
@@ -454,7 +454,7 @@ pred_double0 x =
                    fN (Prelude.negate n))
     (\_ -> Prelude.negate 1)
     (\p -> (\x -> x) (pred_double p))
-    (\p -> Prelude.negate ((\x -> 2 Prelude.* x Prelude.+ 1) p))
+    (\p -> Prelude.negate ((\x -> shiftL x 1 Prelude.+ 1) p))
     x
 
 pos_sub :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
@@ -470,7 +470,7 @@ pos_sub x y =
                    else fO (n `Prelude.div` 2))
       (\q -> double (pos_sub p q))
       (\q -> succ_double (pos_sub p q))
-      (\_ -> (\x -> x) ((\x -> 2 Prelude.* x) p))
+      (\_ -> (\x -> x) ((\x -> shiftL x 1) p))
       y)
     (\p ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
@@ -486,7 +486,7 @@ pos_sub x y =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> Prelude.negate ((\x -> 2 Prelude.* x) q))
+      (\q -> Prelude.negate ((\x -> shiftL x 1) q))
       (\q -> Prelude.negate (pred_double q))
       (\_ -> 0)
       y)
@@ -603,25 +603,25 @@ pos_div_eucl a b =
     case pos_div_eucl a' b of {
      Pair q r ->
       let {
-       r' = (Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) r)
+       r' = (Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) r)
               ((\x -> x) 1)}
       in
       case ltb r' b of {
-       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q) r';
+       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) q) r';
        False -> Pair
-        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q)
+        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) q)
           ((\x -> x) 1)) ((Prelude.-) r' b)}})
     (\a' ->
     case pos_div_eucl a' b of {
      Pair q r ->
-      let {r' = (Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) r} in
+      let {r' = (Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) r} in
       case ltb r' b of {
-       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q) r';
+       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) q) r';
        False -> Pair
-        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q)
+        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> shiftL x 1) 1)) q)
           ((\x -> x) 1)) ((Prelude.-) r' b)}})
     (\_ ->
-    case leb ((\x -> x) ((\x -> 2 Prelude.* x) 1)) b of {
+    case leb ((\x -> x) ((\x -> shiftL x 1) 1)) b of {
      True -> Pair 0 ((\x -> x) 1);
      False -> Pair ((\x -> x) 1) 0})
     a
@@ -746,56 +746,53 @@ pow_pos rmul x i =
     (\_ -> x)
     i
 
-data Q =
-   Qmake Prelude.Integer Prelude.Integer
-
-qnum :: Q -> Prelude.Integer
+qnum :: Prelude.Rational -> Prelude.Integer
 qnum q =
   case q of {
-   Qmake qnum0 _ -> qnum0}
+   (:%) qnum0 _ -> qnum0}
 
-qden :: Q -> Prelude.Integer
+qden :: Prelude.Rational -> Prelude.Integer
 qden q =
   case q of {
-   Qmake _ qden0 -> qden0}
+   (:%) _ qden0 -> qden0}
 
-qplus :: Q -> Q -> Q
+qplus :: Prelude.Rational -> Prelude.Rational -> Prelude.Rational
 qplus x y =
-  Qmake
+  (:%)
     ((Prelude.+) ((Prelude.*) (qnum x) ((\x -> x) (qden y)))
       ((Prelude.*) (qnum y) ((\x -> x) (qden x)))) (mul (qden x) (qden y))
 
-qmult :: Q -> Q -> Q
+qmult :: Prelude.Rational -> Prelude.Rational -> Prelude.Rational
 qmult x y =
-  Qmake ((Prelude.*) (qnum x) (qnum y)) (mul (qden x) (qden y))
+  (:%) ((Prelude.*) (qnum x) (qnum y)) (mul (qden x) (qden y))
 
-qopp :: Q -> Q
+qopp :: Prelude.Rational -> Prelude.Rational
 qopp x =
-  Qmake (opp (qnum x)) (qden x)
+  (:%) (opp (qnum x)) (qden x)
 
-qminus :: Q -> Q -> Q
+qminus :: Prelude.Rational -> Prelude.Rational -> Prelude.Rational
 qminus x y =
   qplus x (qopp y)
 
-qinv :: Q -> Q
+qinv :: Prelude.Rational -> Prelude.Rational
 qinv x =
   (\fO fP fN n -> if n Prelude.== 0 then fO () else
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
-    (\_ -> Qmake 0 1)
-    (\p -> Qmake ((\x -> x) (qden x)) p)
-    (\p -> Qmake (Prelude.negate (qden x)) p)
+    (\_ -> (:%) 0 1)
+    (\p -> (:%) ((\x -> x) (qden x)) p)
+    (\p -> (:%) (Prelude.negate (qden x)) p)
     (qnum x)
 
-qlt_le_dec :: Q -> Q -> Sumbool
+qlt_le_dec :: Prelude.Rational -> Prelude.Rational -> Sumbool
 qlt_le_dec x y =
   z_lt_le_dec ((Prelude.*) (qnum x) ((\x -> x) (qden y)))
     ((Prelude.*) (qnum y) ((\x -> x) (qden x)))
 
-qarchimedean :: Q -> Prelude.Integer
+qarchimedean :: Prelude.Rational -> Prelude.Integer
 qarchimedean q =
   case q of {
-   Qmake qnum0 _ ->
+   (:%) qnum0 _ ->
     (\fO fP fN n -> if n Prelude.== 0 then fO () else
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
@@ -804,24 +801,24 @@ qarchimedean q =
       (\_ -> 1)
       qnum0}
 
-qpower_positive :: Q -> Prelude.Integer -> Q
+qpower_positive :: Prelude.Rational -> Prelude.Integer -> Prelude.Rational
 qpower_positive =
   pow_pos qmult
 
-qpower :: Q -> Prelude.Integer -> Q
+qpower :: Prelude.Rational -> Prelude.Integer -> Prelude.Rational
 qpower q z =
   (\fO fP fN n -> if n Prelude.== 0 then fO () else
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
-    (\_ -> Qmake ((\x -> x) 1) 1)
+    (\_ -> (:%) ((\x -> x) 1) 1)
     (\p -> qpower_positive q p)
     (\p -> qinv (qpower_positive q p))
     z
 
-qabs :: Q -> Q
+qabs :: Prelude.Rational -> Prelude.Rational
 qabs x =
   case x of {
-   Qmake n d -> Qmake (abs n) d}
+   (:%) n d -> (:%) (abs n) d}
 
 pos_log2floor_plus1 :: Prelude.Integer -> Prelude.Integer
 pos_log2floor_plus1 p =
@@ -834,25 +831,25 @@ pos_log2floor_plus1 p =
     (\_ -> 1)
     p
 
-qbound_lt_ZExp2 :: Q -> Prelude.Integer
+qbound_lt_ZExp2 :: Prelude.Rational -> Prelude.Integer
 qbound_lt_ZExp2 q =
   (\fO fP fN n -> if n Prelude.== 0 then fO () else
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
-    (\_ -> Prelude.negate ((\x -> 2 Prelude.* x) ((\x -> 2 Prelude.* x)
-    ((\x -> 2 Prelude.* x) ((\x -> 2 Prelude.* x Prelude.+ 1)
-    ((\x -> 2 Prelude.* x) ((\x -> 2 Prelude.* x Prelude.+ 1)
-    ((\x -> 2 Prelude.* x Prelude.+ 1) ((\x -> 2 Prelude.* x Prelude.+ 1)
-    ((\x -> 2 Prelude.* x Prelude.+ 1) 1))))))))))
+    (\_ -> Prelude.negate ((\x -> shiftL x 1) ((\x -> shiftL x 1)
+    ((\x -> shiftL x 1) ((\x -> shiftL x 1 Prelude.+ 1) ((\x -> shiftL x 1)
+    ((\x -> shiftL x 1 Prelude.+ 1) ((\x -> shiftL x 1 Prelude.+ 1)
+    ((\x -> shiftL x 1 Prelude.+ 1) ((\x -> shiftL x 1 Prelude.+ 1)
+    1))))))))))
     (\p ->
     pos_sub (succ (pos_log2floor_plus1 p)) (pos_log2floor_plus1 (qden q)))
     (\_ -> 0)
     (qnum q)
 
 data CReal =
-   MkCReal (Prelude.Integer -> Q) Prelude.Integer
+   MkCReal (Prelude.Integer -> Prelude.Rational) Prelude.Integer
 
-seq :: CReal -> Prelude.Integer -> Q
+seq :: CReal -> Prelude.Integer -> Prelude.Rational
 seq c =
   case c of {
    MkCReal seq0 _ -> seq0}
@@ -861,47 +858,48 @@ sig_forall_dec :: (Prelude.Integer -> Sumbool) -> Sumor Prelude.Integer
 sig_forall_dec =
   Prelude.error "AXIOM TO BE REALIZED"
 
-lowerCutBelow :: (Q -> Bool) -> Q
+lowerCutBelow :: (Prelude.Rational -> Bool) -> Prelude.Rational
 lowerCutBelow f =
   let {
    s = sig_forall_dec (\n ->
-         let {b = f (qopp (Qmake (of_nat0 n) 1))} in
+         let {b = f (qopp ((:%) (of_nat0 n) 1))} in
          case b of {
           True -> Right;
           False -> Left})}
   in
   case s of {
-   Inleft a -> qopp (Qmake (of_nat0 a) 1);
+   Inleft a -> qopp ((:%) (of_nat0 a) 1);
    Inright -> false_rec}
 
-lowerCutAbove :: (Q -> Bool) -> Q
+lowerCutAbove :: (Prelude.Rational -> Bool) -> Prelude.Rational
 lowerCutAbove f =
   let {
    s = sig_forall_dec (\n ->
-         let {b = f (Qmake (of_nat0 n) 1)} in
+         let {b = f ((:%) (of_nat0 n) 1)} in
          case b of {
           True -> Left;
           False -> Right})}
   in
   case s of {
-   Inleft a -> Qmake (of_nat0 a) 1;
+   Inleft a -> (:%) (of_nat0 a) 1;
    Inright -> false_rec}
 
-type DReal = (Q -> Bool)
+type DReal = (Prelude.Rational -> Bool)
 
-dRealQlim_rec :: (Q -> Bool) -> Prelude.Integer -> Prelude.Integer -> Q
+dRealQlim_rec :: (Prelude.Rational -> Bool) -> Prelude.Integer ->
+                 Prelude.Integer -> Prelude.Rational
 dRealQlim_rec f n p =
   (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
     (\_ -> false_rec)
     (\n0 ->
     let {
      b = f
-           (qplus (proj1_sig (lowerCutBelow f)) (Qmake (of_nat0 n0)
+           (qplus (proj1_sig (lowerCutBelow f)) ((:%) (of_nat0 n0)
              (of_nat (Prelude.succ n))))}
     in
     case b of {
      True ->
-      qplus (proj1_sig (lowerCutBelow f)) (Qmake (of_nat0 n0)
+      qplus (proj1_sig (lowerCutBelow f)) ((:%) (of_nat0 n0)
         (of_nat (Prelude.succ n)));
      False -> dRealQlim_rec f n n0})
     p
@@ -913,7 +911,7 @@ dRealAbstr x =
     let {
      s = qlt_le_dec
            (qplus q
-             (qpower (Qmake ((\x -> x) ((\x -> 2 Prelude.* x) 1)) 1)
+             (qpower ((:%) ((\x -> x) ((\x -> shiftL x 1) 1)) 1)
                (opp (of_nat0 n)))) (seq x (opp (of_nat0 n)))}
     in
     case s of {
@@ -924,25 +922,25 @@ dRealAbstr x =
           Inleft _ -> True;
           Inright -> False})
 
-dRealQlim :: DReal -> Prelude.Integer -> Q
+dRealQlim :: DReal -> Prelude.Integer -> Prelude.Rational
 dRealQlim x n =
   let {s = lowerCutAbove x} in
   let {s0 = qarchimedean (qminus s (proj1_sig (lowerCutBelow x)))} in
   dRealQlim_rec x n ((Prelude.*) (Prelude.succ n) (to_nat s0))
 
-dRealQlimExp2 :: DReal -> Prelude.Integer -> Q
+dRealQlimExp2 :: DReal -> Prelude.Integer -> Prelude.Rational
 dRealQlimExp2 x n =
   dRealQlim x (pred (pow (Prelude.succ (Prelude.succ 0)) n))
 
-cReal_of_DReal_seq :: DReal -> Prelude.Integer -> Q
+cReal_of_DReal_seq :: DReal -> Prelude.Integer -> Prelude.Rational
 cReal_of_DReal_seq x n =
   proj1_sig (dRealQlimExp2 x (to_nat0 (opp n)))
 
 cReal_of_DReal_scale :: DReal -> Prelude.Integer
 cReal_of_DReal_scale x =
   qbound_lt_ZExp2
-    (qplus (qabs (cReal_of_DReal_seq x (Prelude.negate 1))) (Qmake ((\x -> x)
-      ((\x -> 2 Prelude.* x) 1)) 1))
+    (qplus (qabs (cReal_of_DReal_seq x (Prelude.negate 1))) ((:%) ((\x -> x)
+      ((\x -> shiftL x 1) 1)) 1))
 
 dRealRepr :: DReal -> CReal
 dRealRepr x =
@@ -1042,6 +1040,24 @@ multiply_dual x y =
     (( Prelude.+ ) (( Prelude.* ) (dual_deriv x) (dual_value y))
       (( Prelude.* ) (dual_value x) (dual_deriv y)))
 
+divide_dual :: Dual_num -> Dual_num -> Dual_num
+divide_dual x y =
+  Mk_dual (( Prelude./ ) (dual_value x) (dual_value y))
+    (( Prelude./ )
+      (( Prelude.- ) (( Prelude.* ) (dual_deriv x) (dual_value y))
+        (( Prelude.* ) (dual_value x) (dual_deriv y)))
+      ((\ a b -> a Prelude.^ b) (dual_value y) (Prelude.succ (Prelude.succ
+        0))))
+
+recip_dual :: Dual_num -> Dual_num
+recip_dual x =
+  Mk_dual (((Prelude./) 1.0) (dual_value x))
+    (( Prelude.* )
+      (( Prelude.* ) (Prelude.fromIntegral (Prelude.negate 1))
+        (dual_deriv x))
+      ((\ a b -> a Prelude.^ b) (((Prelude./) 1.0) (dual_value x))
+        (Prelude.succ (Prelude.succ 0))))
+
 acosh_dual :: Dual_num -> Dual_num
 acosh_dual d =
   let {x = dual_value d} in
@@ -1052,6 +1068,10 @@ acosh_dual d =
       (( Prelude.- )
         ((\ a b -> a Prelude.^ b) x (Prelude.succ (Prelude.succ 0)))
         (Prelude.fromIntegral ((\x -> x) 1)))))
+
+from_rational_dual :: Prelude.Rational -> Dual_num
+from_rational_dual q =
+  Mk_dual (Prelude.fromRational q) (Prelude.fromIntegral 0)
 
 r_to_dual :: R -> Dual_num
 r_to_dual x =

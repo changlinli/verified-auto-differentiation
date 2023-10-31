@@ -7,6 +7,8 @@ Extraction Language Haskell.
 (* Adapted from https://github.com/inQWIRE/SQIR/blob/a76b448bf2d922ec9f495ca3f599534d0437cda5/examples/ghz/extraction/ExtrOcamlR.v#L4 *)
 
 Require Import Reals.
+Require Import QArith.
+Require Import Coq.Numbers.BinNums.
 
 Extract Constant R => "Prelude.Double".
 Extract Inlined Constant R0 => "0.0".
@@ -38,6 +40,8 @@ Extract Inlined Constant Rabs => "Prelude.abs".
 Extract Inlined Constant Q2R => "Prelude.fromRational".
 Extract Inlined Constant Rsqrt => "Prelude.sqrt".
 Extract Inlined Constant sqrt => "Prelude.sqrt".
+Extract Inductive positive => "Prelude.Integer" ["(\x -> shiftL x 1 Prelude.+ 1)" "(\x -> shiftL x 1)" "1"].
+Extract Inductive Q => "Prelude.Rational" ["(:%)"].
 
 Open Scope R.
 
@@ -51,5 +55,8 @@ Extraction "haskell/generated/ToyVerifiedAutomaticDifferentiation/Internal.hs"
   from_integer_dual
   eval_derivative
   eval_value
+  from_rational_dual
+  divide_dual
+  recip_dual
   acosh_dual
   .

@@ -61,7 +61,7 @@ Definition multiply_dual (x y : dual_num) : dual_num :=
     (dual_value x * dual_value y)
     (dual_deriv x * dual_value y + dual_value x * dual_deriv y).
 
-Definition division_dual (x y : dual_num) : dual_num :=
+Definition divide_dual (x y : dual_num) : dual_num :=
   mk_dual
     (dual_value x / dual_value y)
     ((dual_deriv x * dual_value y - dual_value x * dual_deriv y) / ((dual_value y)^2)).
