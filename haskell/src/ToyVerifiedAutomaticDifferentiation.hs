@@ -7,6 +7,8 @@ module ToyVerifiedAutomaticDifferentiation
     , evalValue
     , ($|)
     , ($$)
+    , toy_example
+    , toy_example_deriv
     )
     where
 
@@ -24,10 +26,10 @@ instance Num TI.Dual_num where
 instance Fractional TI.Dual_num where
     (/) = TI.divide_dual
     recip = TI.recip_dual
-    fromRational = TI.from_rational
+    fromRational = TI.from_rational_dual
 
 newtype DualNum = DualNum { unDualNum :: TI.Dual_num }
-    deriving newtype (Num)
+    deriving newtype (Num, Fractional)
 
 convertFromF1 :: (TI.Dual_num -> TI.Dual_num) -> DualNum -> DualNum
 convertFromF1 f = \(DualNum d) -> DualNum (f d)
@@ -46,3 +48,12 @@ evalValue f x = TI.eval_value (convertToF1 f) x
 
 ($$) :: (DualNum -> DualNum) -> Double -> Double
 ($$) = evalValue
+
+f :: DualNum -> DualNum
+f x = x * x + 2 * x / x
+
+toy_example :: Double
+toy_example = f $$ 3
+
+toy_example_deriv :: Double
+toy_example_deriv = f $| 3
