@@ -17,10 +17,6 @@ data Bool =
    True
  | False
 
-data Nat =
-   O
- | S Nat
-
 data Prod a b =
    Pair a b
 
@@ -61,41 +57,15 @@ data Sumor a =
    Inleft a
  | Inright
 
-pred :: Nat -> Nat
-pred n =
-  case n of {
-   O -> n;
-   S u -> u}
+pred :: Prelude.Integer -> Prelude.Integer
+pred = (\n -> Prelude.max 0 (Prelude.pred n))
 
-add :: Nat -> Nat -> Nat
-add n m =
-  case n of {
-   O -> m;
-   S p -> S (add p m)}
-
-mul :: Nat -> Nat -> Nat
-mul n m =
-  case n of {
-   O -> O;
-   S p -> add m (mul p m)}
-
-add0 :: Nat -> Nat -> Nat
-add0 n m =
-  case n of {
-   O -> m;
-   S p -> S (add0 p m)}
-
-mul0 :: Nat -> Nat -> Nat
-mul0 n m =
-  case n of {
-   O -> O;
-   S p -> add0 m (mul0 p m)}
-
-pow :: Nat -> Nat -> Nat
+pow :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
 pow n m =
-  case m of {
-   O -> S O;
-   S m0 -> mul0 n (pow n m0)}
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> Prelude.succ 0)
+    (\m0 -> (Prelude.*) n (pow n m0))
+    m
 
 succ :: Prelude.Integer -> Prelude.Integer
 succ x =
@@ -108,8 +78,8 @@ succ x =
     (\_ -> (\x -> 2 Prelude.* x) 1)
     x
 
-add1 :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
-add1 x y =
+add :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
+add x y =
   (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
@@ -120,7 +90,7 @@ add1 x y =
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
       (\q -> (\x -> 2 Prelude.* x) (add_carry p q))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add1 p q))
+      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
       (\_ -> (\x -> 2 Prelude.* x) (succ p))
       y)
     (\p ->
@@ -128,8 +98,8 @@ add1 x y =
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add1 p q))
-      (\q -> (\x -> 2 Prelude.* x) (add1 p q))
+      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
+      (\q -> (\x -> 2 Prelude.* x) (add p q))
       (\_ -> (\x -> 2 Prelude.* x Prelude.+ 1) p)
       y)
     (\_ ->
@@ -164,7 +134,7 @@ add_carry x y =
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
       (\q -> (\x -> 2 Prelude.* x) (add_carry p q))
-      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add1 p q))
+      (\q -> (\x -> 2 Prelude.* x Prelude.+ 1) (add p q))
       (\_ -> (\x -> 2 Prelude.* x) (succ p))
       y)
     (\_ ->
@@ -286,26 +256,41 @@ sub x y =
    IsPos z -> z;
    _ -> 1}
 
-mul1 :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
-mul1 x y =
+mul :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
+mul x y =
   (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p -> add1 y ((\x -> 2 Prelude.* x) (mul1 p y)))
-    (\p -> (\x -> 2 Prelude.* x) (mul1 p y))
+    (\p -> add y ((\x -> 2 Prelude.* x) (mul p y)))
+    (\p -> (\x -> 2 Prelude.* x) (mul p y))
     (\_ -> y)
     x
 
-size_nat :: Prelude.Integer -> Nat
+iter :: (a1 -> a1) -> a1 -> Prelude.Integer -> a1
+iter f x n =
+  (\fI fO fH n -> if n Prelude.== 1 then fH () else
+                   if Prelude.odd n
+                   then fI (n `Prelude.div` 2)
+                   else fO (n `Prelude.div` 2))
+    (\n' -> f (iter f (iter f x n') n'))
+    (\n' -> iter f (iter f x n') n')
+    (\_ -> f x)
+    n
+
+pow0 :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
+pow0 x =
+  iter (mul x) 1
+
+size_nat :: Prelude.Integer -> Prelude.Integer
 size_nat p =
   (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
                    else fO (n `Prelude.div` 2))
-    (\p0 -> S (size_nat p0))
-    (\p0 -> S (size_nat p0))
-    (\_ -> S O)
+    (\p0 -> Prelude.succ (size_nat p0))
+    (\p0 -> Prelude.succ (size_nat p0))
+    (\_ -> Prelude.succ 0)
     p
 
 compare_cont :: Comparison -> Prelude.Integer -> Prelude.Integer ->
@@ -348,12 +333,12 @@ compare :: Prelude.Integer -> Prelude.Integer -> Comparison
 compare =
   compare_cont Eq
 
-ggcdn :: Nat -> Prelude.Integer -> Prelude.Integer -> Prod Prelude.Integer
-         (Prod Prelude.Integer Prelude.Integer)
+ggcdn :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer -> Prod
+         Prelude.Integer (Prod Prelude.Integer Prelude.Integer)
 ggcdn n a b =
-  case n of {
-   O -> Pair 1 (Pair a b);
-   S n0 ->
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> Pair 1 (Pair a b))
+    (\n0 ->
     (\fI fO fH n -> if n Prelude.== 1 then fH () else
                    if Prelude.odd n
                    then fI (n `Prelude.div` 2)
@@ -371,12 +356,12 @@ ggcdn n a b =
            Pair g p ->
             case p of {
              Pair ba aa -> Pair g (Pair aa
-              (add1 aa ((\x -> 2 Prelude.* x) ba)))}};
+              (add aa ((\x -> 2 Prelude.* x) ba)))}};
          Gt ->
           case ggcdn n0 (sub a' b') b of {
            Pair g p ->
             case p of {
-             Pair ab bb -> Pair g (Pair (add1 bb ((\x -> 2 Prelude.* x) ab))
+             Pair ab bb -> Pair g (Pair (add bb ((\x -> 2 Prelude.* x) ab))
               bb)}}})
         (\b0 ->
         case ggcdn n0 a b0 of {
@@ -401,12 +386,13 @@ ggcdn n a b =
         (\_ -> Pair 1 (Pair a 1))
         b)
       (\_ -> Pair 1 (Pair 1 b))
-      a}
+      a)
+    n
 
 ggcd :: Prelude.Integer -> Prelude.Integer -> Prod Prelude.Integer
         (Prod Prelude.Integer Prelude.Integer)
 ggcd a b =
-  ggcdn (add (size_nat a) (size_nat b)) a b
+  ggcdn ((Prelude.+) (size_nat a) (size_nat b)) a b
 
 iter_op :: (a1 -> a1 -> a1) -> Prelude.Integer -> a1 -> a1
 iter_op op p a =
@@ -419,23 +405,27 @@ iter_op op p a =
     (\_ -> a)
     p
 
-to_nat :: Prelude.Integer -> Nat
+to_nat :: Prelude.Integer -> Prelude.Integer
 to_nat x =
-  iter_op add x (S O)
+  iter_op (Prelude.+) x (Prelude.succ 0)
 
-of_nat :: Nat -> Prelude.Integer
+of_nat :: Prelude.Integer -> Prelude.Integer
 of_nat n =
-  case n of {
-   O -> 1;
-   S x -> case x of {
-           O -> 1;
-           S _ -> succ (of_nat x)}}
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> 1)
+    (\x ->
+    (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+      (\_ -> 1)
+      (\_ -> succ (of_nat x))
+      x)
+    n
 
-of_succ_nat :: Nat -> Prelude.Integer
+of_succ_nat :: Prelude.Integer -> Prelude.Integer
 of_succ_nat n =
-  case n of {
-   O -> 1;
-   S x -> succ (of_succ_nat x)}
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> 1)
+    (\x -> succ (of_succ_nat x))
+    n
 
 double :: Prelude.Integer -> Prelude.Integer
 double x =
@@ -553,6 +543,18 @@ sgn z =
     (\_ -> Prelude.negate 1)
     z
 
+leb :: Prelude.Integer -> Prelude.Integer -> Bool
+leb x y =
+  case compare0 x y of {
+   Gt -> False;
+   _ -> True}
+
+ltb :: Prelude.Integer -> Prelude.Integer -> Bool
+ltb x y =
+  case compare0 x y of {
+   Lt -> True;
+   _ -> False}
+
 abs :: Prelude.Integer -> Prelude.Integer
 abs z =
   (\fO fP fN n -> if n Prelude.== 0 then fO () else
@@ -563,21 +565,22 @@ abs z =
     (\p -> (\x -> x) p)
     z
 
-to_nat0 :: Prelude.Integer -> Nat
+to_nat0 :: Prelude.Integer -> Prelude.Integer
 to_nat0 z =
   (\fO fP fN n -> if n Prelude.== 0 then fO () else
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
-    (\_ -> O)
+    (\_ -> 0)
     (\p -> to_nat p)
-    (\_ -> O)
+    (\_ -> 0)
     z
 
-of_nat0 :: Nat -> Prelude.Integer
+of_nat0 :: Prelude.Integer -> Prelude.Integer
 of_nat0 n =
-  case n of {
-   O -> 0;
-   S n0 -> (\x -> x) (of_succ_nat n0)}
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> 0)
+    (\n0 -> (\x -> x) (of_succ_nat n0))
+    n
 
 to_pos :: Prelude.Integer -> Prelude.Integer
 to_pos z =
@@ -588,6 +591,90 @@ to_pos z =
     (\p -> p)
     (\_ -> 1)
     z
+
+pos_div_eucl :: Prelude.Integer -> Prelude.Integer -> Prod Prelude.Integer
+                Prelude.Integer
+pos_div_eucl a b =
+  (\fI fO fH n -> if n Prelude.== 1 then fH () else
+                   if Prelude.odd n
+                   then fI (n `Prelude.div` 2)
+                   else fO (n `Prelude.div` 2))
+    (\a' ->
+    case pos_div_eucl a' b of {
+     Pair q r ->
+      let {
+       r' = (Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) r)
+              ((\x -> x) 1)}
+      in
+      case ltb r' b of {
+       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q) r';
+       False -> Pair
+        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q)
+          ((\x -> x) 1)) ((Prelude.-) r' b)}})
+    (\a' ->
+    case pos_div_eucl a' b of {
+     Pair q r ->
+      let {r' = (Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) r} in
+      case ltb r' b of {
+       True -> Pair ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q) r';
+       False -> Pair
+        ((Prelude.+) ((Prelude.*) ((\x -> x) ((\x -> 2 Prelude.* x) 1)) q)
+          ((\x -> x) 1)) ((Prelude.-) r' b)}})
+    (\_ ->
+    case leb ((\x -> x) ((\x -> 2 Prelude.* x) 1)) b of {
+     True -> Pair 0 ((\x -> x) 1);
+     False -> Pair ((\x -> x) 1) 0})
+    a
+
+div_eucl :: Prelude.Integer -> Prelude.Integer -> Prod Prelude.Integer
+            Prelude.Integer
+div_eucl a b =
+  (\fO fP fN n -> if n Prelude.== 0 then fO () else
+                   if n Prelude.> 0 then fP n else
+                   fN (Prelude.negate n))
+    (\_ -> Pair 0 0)
+    (\a' ->
+    (\fO fP fN n -> if n Prelude.== 0 then fO () else
+                   if n Prelude.> 0 then fP n else
+                   fN (Prelude.negate n))
+      (\_ -> Pair 0 a)
+      (\_ -> pos_div_eucl a' b)
+      (\b' ->
+      case pos_div_eucl a' ((\x -> x) b') of {
+       Pair q r ->
+        (\fO fP fN n -> if n Prelude.== 0 then fO () else
+                   if n Prelude.> 0 then fP n else
+                   fN (Prelude.negate n))
+          (\_ -> Pair (opp q) 0)
+          (\_ -> Pair (opp ((Prelude.+) q ((\x -> x) 1)))
+          ((Prelude.+) b r))
+          (\_ -> Pair (opp ((Prelude.+) q ((\x -> x) 1))) ((Prelude.+) b r))
+          r})
+      b)
+    (\a' ->
+    (\fO fP fN n -> if n Prelude.== 0 then fO () else
+                   if n Prelude.> 0 then fP n else
+                   fN (Prelude.negate n))
+      (\_ -> Pair 0 a)
+      (\_ ->
+      case pos_div_eucl a' b of {
+       Pair q r ->
+        (\fO fP fN n -> if n Prelude.== 0 then fO () else
+                   if n Prelude.> 0 then fP n else
+                   fN (Prelude.negate n))
+          (\_ -> Pair (opp q) 0)
+          (\_ -> Pair (opp ((Prelude.+) q ((\x -> x) 1)))
+          ((Prelude.-) b r))
+          (\_ -> Pair (opp ((Prelude.+) q ((\x -> x) 1))) ((Prelude.-) b r))
+          r})
+      (\b' ->
+      case pos_div_eucl a' ((\x -> x) b') of {
+       Pair q r -> Pair q (opp r)})
+      b)
+    a
+
+div :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
+div = (\n m -> if m Prelude.== 0 then 0 else Prelude.div n m)
 
 ggcd0 :: Prelude.Integer -> Prelude.Integer -> Prod Prelude.Integer
          (Prod Prelude.Integer Prelude.Integer)
@@ -676,11 +763,11 @@ qplus :: Q -> Q -> Q
 qplus x y =
   Qmake
     ((Prelude.+) ((Prelude.*) (qnum x) ((\x -> x) (qden y)))
-      ((Prelude.*) (qnum y) ((\x -> x) (qden x)))) (mul1 (qden x) (qden y))
+      ((Prelude.*) (qnum y) ((\x -> x) (qden x)))) (mul (qden x) (qden y))
 
 qmult :: Q -> Q -> Q
 qmult x y =
-  Qmake ((Prelude.*) (qnum x) (qnum y)) (mul1 (qden x) (qden y))
+  Qmake ((Prelude.*) (qnum x) (qnum y)) (mul (qden x) (qden y))
 
 qopp :: Q -> Q
 qopp x =
@@ -713,7 +800,7 @@ qarchimedean q =
                    if n Prelude.> 0 then fP n else
                    fN (Prelude.negate n))
       (\_ -> 1)
-      (\p -> add1 p 1)
+      (\p -> add p 1)
       (\_ -> 1)
       qnum0}
 
@@ -770,7 +857,7 @@ seq c =
   case c of {
    MkCReal seq0 _ -> seq0}
 
-sig_forall_dec :: (Nat -> Sumbool) -> Sumor Nat
+sig_forall_dec :: (Prelude.Integer -> Sumbool) -> Sumor Prelude.Integer
 sig_forall_dec =
   Prelude.error "AXIOM TO BE REALIZED"
 
@@ -802,20 +889,22 @@ lowerCutAbove f =
 
 type DReal = (Q -> Bool)
 
-dRealQlim_rec :: (Q -> Bool) -> Nat -> Nat -> Q
+dRealQlim_rec :: (Q -> Bool) -> Prelude.Integer -> Prelude.Integer -> Q
 dRealQlim_rec f n p =
-  case p of {
-   O -> false_rec;
-   S n0 ->
+  (\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))
+    (\_ -> false_rec)
+    (\n0 ->
     let {
      b = f
            (qplus (proj1_sig (lowerCutBelow f)) (Qmake (of_nat0 n0)
-             (of_nat (S n))))}
+             (of_nat (Prelude.succ n))))}
     in
     case b of {
      True ->
-      qplus (proj1_sig (lowerCutBelow f)) (Qmake (of_nat0 n0) (of_nat (S n)));
-     False -> dRealQlim_rec f n n0}}
+      qplus (proj1_sig (lowerCutBelow f)) (Qmake (of_nat0 n0)
+        (of_nat (Prelude.succ n)));
+     False -> dRealQlim_rec f n n0})
+    p
 
 dRealAbstr :: CReal -> DReal
 dRealAbstr x =
@@ -835,15 +924,15 @@ dRealAbstr x =
           Inleft _ -> True;
           Inright -> False})
 
-dRealQlim :: DReal -> Nat -> Q
+dRealQlim :: DReal -> Prelude.Integer -> Q
 dRealQlim x n =
   let {s = lowerCutAbove x} in
   let {s0 = qarchimedean (qminus s (proj1_sig (lowerCutBelow x)))} in
-  dRealQlim_rec x n (mul (S n) (to_nat s0))
+  dRealQlim_rec x n ((Prelude.*) (Prelude.succ n) (to_nat s0))
 
-dRealQlimExp2 :: DReal -> Nat -> Q
+dRealQlimExp2 :: DReal -> Prelude.Integer -> Q
 dRealQlimExp2 x n =
-  dRealQlim x (pred (pow (S (S O)) n))
+  dRealQlim x (pred (pow (Prelude.succ (Prelude.succ 0)) n))
 
 cReal_of_DReal_seq :: DReal -> Prelude.Integer -> Q
 cReal_of_DReal_seq x n =
@@ -903,6 +992,10 @@ rlt_def :: ()
 rlt_def =
   __
 
+rinv_def :: ()
+rinv_def =
+  __
+
 data Dual_num =
    Mk_dual R R
 
@@ -921,11 +1014,54 @@ add_dual x y =
   Mk_dual (( Prelude.+ ) (dual_value x) (dual_value y))
     (( Prelude.+ ) (dual_deriv x) (dual_deriv y))
 
+subtract_dual :: Dual_num -> Dual_num -> Dual_num
+subtract_dual x y =
+  Mk_dual (( Prelude.- ) (dual_value x) (dual_value y))
+    (( Prelude.- ) (dual_deriv x) (dual_deriv y))
+
+negate_dual :: Dual_num -> Dual_num
+negate_dual x =
+  Mk_dual (((Prelude.-) 0.0) (dual_value x))
+    (((Prelude.-) 0.0) (dual_deriv x))
+
 abs_dual :: Dual_num -> Dual_num
 abs_dual x =
   Mk_dual (Prelude.abs (dual_value x)) (Prelude.signum (dual_value x))
 
+signum_dual :: Dual_num -> Dual_num
+signum_dual x =
+  Mk_dual (Prelude.signum (dual_value x)) (Prelude.fromIntegral 0)
+
+from_integer_dual :: Prelude.Integer -> Dual_num
+from_integer_dual z =
+  Mk_dual (Prelude.fromIntegral z) (Prelude.fromIntegral 0)
+
+multiply_dual :: Dual_num -> Dual_num -> Dual_num
+multiply_dual x y =
+  Mk_dual (( Prelude.* ) (dual_value x) (dual_value y))
+    (( Prelude.+ ) (( Prelude.* ) (dual_deriv x) (dual_value y))
+      (( Prelude.* ) (dual_value x) (dual_deriv y)))
+
+acosh_dual :: Dual_num -> Dual_num
+acosh_dual d =
+  let {x = dual_value d} in
+  let {x' = dual_deriv d} in
+  Mk_dual (Prelude.acosh x)
+  (( Prelude./ ) x'
+    (Prelude.sqrt
+      (( Prelude.- )
+        ((\ a b -> a Prelude.^ b) x (Prelude.succ (Prelude.succ 0)))
+        (Prelude.fromIntegral ((\x -> x) 1)))))
+
+r_to_dual :: R -> Dual_num
+r_to_dual x =
+  Mk_dual x (Prelude.fromIntegral ((\x -> x) 1))
+
+eval_value :: (Dual_num -> Dual_num) -> R -> R
+eval_value f x =
+  dual_value (f (r_to_dual x))
+
 eval_derivative :: (Dual_num -> Dual_num) -> R -> R
 eval_derivative f x =
-  dual_deriv (f (Mk_dual x (Prelude.fromIntegral ((\x -> x) 1))))
+  dual_deriv (f (r_to_dual x))
 

@@ -1,7 +1,9 @@
+Require Import Basics.
 Require Import Reals.
 Require Import Ranalysis.
 Require Import Ranalysis1.
 Require Import FunctionalExtensionality.
+Require Import QArith.
 
 Open Scope R.
 
@@ -33,6 +35,9 @@ Definition add_dual (x y : dual_num) : dual_num :=
 
 Definition subtract_dual (x y : dual_num) : dual_num :=
   mk_dual (dual_value x - dual_value y) (dual_deriv x - dual_deriv y).
+
+Definition negate_dual (x : dual_num) : dual_num :=
+  mk_dual (- dual_value x) (- dual_deriv x).
 
 (* Not sure if this will extract correctly... because total_order_T is an axiom *)
 Definition Rsignum (x : R) : R :=
@@ -87,8 +92,10 @@ Definition Rclipped_ln (x : R) : R :=
   | right is_pos => Rln (mkposreal x is_pos)
   end.
 
-Definition log_dual (x : dual_num) : dual_num :=
-  mk_dual (Rclipped_ln (dual_value x)) (dual_deriv x / dual_value x).
+Definition log_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (Rclipped_ln x) (x' / x).
 
 Definition sin_dual (x : dual_num) : dual_num :=
   mk_dual (sin (dual_value x)) (dual_deriv x * cos (dual_value x)).
@@ -99,12 +106,64 @@ Definition cos_dual (x : dual_num) : dual_num :=
 Definition tan_dual (x : dual_num) : dual_num :=
   mk_dual (tan (dual_value x)) ((dual_deriv x) / ((cos (dual_value x)) ^ 2)).
 
+Definition asin_dual (x : dual_num) : dual_num :=
+  mk_dual (asin (dual_value x)) (dual_deriv x / (sqrt (1 - (dual_value x) ^ 2))).
+
+Definition acos_dual (x : dual_num) : dual_num :=
+  mk_dual (acos (dual_value x)) (- (dual_deriv x) / (sqrt (1 - (dual_value x) ^ 2))).
+
+Definition atan_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (atan x) (x' / (1 + x ^ 2)).
+
+Definition sinh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (sinh x) (x' * cosh x).
+
+Definition cosh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (cosh x) (x' * sinh x).
+
+Definition tanh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (tanh x) (x' * (1 - (tanh x) ^ 2)).
+
+Definition asinh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (arcsinh x) (x' / (sqrt (1 + x ^ 2))).
+
+Definition arccosh : R -> R.
+  Admitted.
+
+Definition arctanh : R -> R.
+  Admitted.
+
+Definition acosh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (arccosh x) (x' / (sqrt (x ^ 2 - 1))).
+
+Definition atanh_dual (d : dual_num) : dual_num :=
+  let x := dual_value d in
+  let x' := dual_deriv d in
+  mk_dual (arctanh x) (x' / (1 - x ^ 2)).
+
+Definition from_rational_dual (q : Q) : dual_num :=
+  mk_dual (Q2R q) 0.
+
+Definition r_to_dual (x : R) : dual_num :=
+  mk_dual x 1.
 
 Definition eval_value (f : dual_num -> dual_num) (x : R) : R :=
-  dual_value (f (mk_dual x 1)).
+  dual_value (f (r_to_dual x)).
 
 Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
-  dual_deriv (f (mk_dual x 1)).
+  dual_deriv (f (r_to_dual x)).
 
 Module DifferentiableEverywhere.
 
@@ -265,37 +324,63 @@ Module NotDifferentiableEverywhere.
     | Add (x y : auto_diff_ast)
     | Abs (x : auto_diff_ast).
 
-  Definition flat_map {A B : Type} (x : option A) (f : A -> option B) : option B :=
+  Inductive eval_result (A : Type) : Type :=
+    | Successful : A -> eval_result A
+    | NotDifferentiable : A -> eval_result A.
+
+  Arguments Successful [A].
+  Arguments NotDifferentiable [A].
+
+  Definition pull_out_result {A : Type} (r : eval_result A) : A :=
+    match r with
+    | Successful x => x
+    | NotDifferentiable x => x
+    end.
+
+  Definition mark_as_non_differentiable {A : Type} (x : eval_result A) : eval_result A :=
     match x with
-    | Some a => f a
-    | None => None
+    | Successful x => NotDifferentiable x
+    | NotDifferentiable x => NotDifferentiable x
+    end.
+
+  Definition flat_map {A B : Type} (x : eval_result A) (f : A -> eval_result B) : eval_result B :=
+    match x with
+    | Successful a => f a
+    | NotDifferentiable a => mark_as_non_differentiable (f a)
     end.
  
-  Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : option dual_num :=
+  Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : eval_result dual_num :=
     match ast with
     | Add x_ast y_ast =>
       flat_map
         (eval_ast_dual x_ast x)
-        (fun x_res => flat_map (eval_ast_dual y_ast x) (fun y_res => Some (add_dual x_res y_res)))
-    | Var => Some x
+        (fun x_res => flat_map (eval_ast_dual y_ast x) (fun y_res => Successful (add_dual x_res y_res)))
+    | Var => Successful x
     | Constant x_ast c =>
       flat_map
         (eval_ast_dual x_ast x)
-        (fun x_res => Some (constant_dual c x_res))
+        (fun x_res => Successful (constant_dual c x_res))
     | Abs x_ast =>
       flat_map
         (eval_ast_dual x_ast x)
         (fun x_res => 
             match total_order_T (dual_value x_res) 0 with
-            | inleft (left _) => Some (abs_dual x_res)
-            | inleft (right _) => None
-            | inright _ => Some (abs_dual x_res)
+            | inleft (left _) => Successful (abs_dual x_res)
+            | inleft (right _) => NotDifferentiable (abs_dual x_res)
+            | inright _ => Successful (abs_dual x_res)
             end
         )
   end.
 
-  Definition ast_defines_derivative_at (f : dual_num -> dual_num) (x : R) : Prop.
-    Admitted.
+  Definition ast_defines_f (ast : auto_diff_ast) (f : dual_num -> dual_num) : Prop :=
+    compose pull_out_result (eval_ast_dual ast) = f.
+
+  Definition eval_result_is_valid_derivative {A : Type} (r : eval_result A) : Prop :=
+    exists x : A, r = Successful x.
+
+  Definition has_ast_that_defines_derivative_at (f : dual_num -> dual_num) (x : R) : Prop :=
+    exists (ast : auto_diff_ast),
+       ast_defines_f ast f /\ eval_result_is_valid_derivative (eval_ast_dual ast (r_to_dual x)).
 
   Definition derivative_is_correct_at (f_dual : dual_num -> dual_num) (x : R) : Prop :=
     let f := eval_value f_dual in
@@ -303,6 +388,36 @@ Module NotDifferentiableEverywhere.
     derivative_at_point_is f x (f' x).
 
   Theorem auto_differentiate_is_correct :
-    forall (f : dual_num -> dual_num) (x : R), ast_defines_derivative_at f x -> derivative_is_correct_at f x.
+    forall (f : dual_num -> dual_num) (x : R),
+      has_ast_that_defines_derivative_at f x -> derivative_is_correct_at f x.
+  Proof.
+  intros.
+  destruct H as (ast & H).
+  unfold derivative_is_correct_at.
+  generalize dependent f.
+  generalize dependent x.
+  induction ast.
+  +
+    intros.
+    destruct H.
+    unfold ast_defines_f in H.
+    unfold eval_result_is_valid_derivative in H0.
+    destruct H0.
+    rewrite <- H.
+    simpl.
+    assert (compose pull_out_result (fun x1 : dual_num => Successful x1) = fun x1 => x1).
+      { admit. }
+    rewrite H1.
+    unfold eval_value.
+    unfold eval_derivative.
+    simpl.
+    apply derivable_pt_lim_id.
+  +
+    intros.
+    destruct H.
+    unfold ast_defines_f in H.
+    rewrite <- H.
+    simpl.
+    Admitted.
 
 End NotDifferentiableEverywhere.
