@@ -1153,13 +1153,13 @@ sinh_dual :: Dual_num -> Dual_num
 sinh_dual d =
   let {x = dual_value d} in
   let {x' = dual_deriv d} in
-  Mk_dual (Prelude.asinh x) (( Prelude.* ) x' (Prelude.acosh x))
+  Mk_dual (Prelude.sinh x) (( Prelude.* ) x' (Prelude.cosh x))
 
 cosh_dual :: Dual_num -> Dual_num
 cosh_dual d =
   let {x = dual_value d} in
   let {x' = dual_deriv d} in
-  Mk_dual (Prelude.acosh x) (( Prelude.* ) x' (Prelude.asinh x))
+  Mk_dual (Prelude.cosh x) (( Prelude.* ) x' (Prelude.sinh x))
 
 tanh_dual :: Dual_num -> Dual_num
 tanh_dual d =
