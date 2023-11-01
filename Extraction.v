@@ -38,10 +38,16 @@ Extract Inlined Constant INR => "Prelude.fromIntegral".
 Extract Inlined Constant Rsignum => "Prelude.signum".
 Extract Inlined Constant Rabs => "Prelude.abs".
 Extract Inlined Constant Q2R => "Prelude.fromRational".
+Extract Inlined Constant Rln => "Prelude.log".
 Extract Inlined Constant Rsqrt => "Prelude.sqrt".
 Extract Inlined Constant sqrt => "Prelude.sqrt".
-Extract Inductive positive => "Prelude.Integer" ["(\x -> shiftL x 1 Prelude.+ 1)" "(\x -> shiftL x 1)" "1"].
-Extract Inductive Q => "Prelude.Rational" ["(:%)"].
+Extract Inlined Constant exp => "Prelude.exp".
+Extract Inlined Constant PI => "Prelude.pi".
+(* This is kind of a stretch... better thing would be to find a replacement for Rle_lt_dec *)
+Extract Inlined Constant Rclipped_ln => "Prelude.log".
+Extract Inductive positive =>
+  "Prelude.Integer" ["(\x -> shiftL @Prelude.Integer x 1 Prelude.+ 1)" "(\x -> shiftL @Prelude.Integer x 1)" "1"].
+Extract Inductive Q => "Prelude.Rational" ["(GHC.Real.:%)"].
 
 Open Scope R.
 
@@ -58,5 +64,21 @@ Extraction "haskell/generated/ToyVerifiedAutomaticDifferentiation/Internal.hs"
   from_rational_dual
   divide_dual
   recip_dual
+  sin_dual
+  cos_dual
+  tan_dual
+  asin_dual
+  acos_dual
+  atan_dual
+  sinh_dual
+  cosh_dual
+  tanh_dual
+  arcsinh
+  asinh_dual
   acosh_dual
+  atanh_dual
+  exp_dual
+  sqrt_dual
+  pi_dual
+  log_dual
   .

@@ -28,11 +28,25 @@ instance Fractional TI.Dual_num where
     recip = TI.recip_dual
     fromRational = TI.from_rational_dual
 
+instance Floating TI.Dual_num where
+    pi = TI.pi_dual
+    exp = TI.exp_dual
+    log = TI.log_dual
+    sin = TI.sin_dual
+    cos = TI.cos_dual
+    tan = TI.tan_dual
+    asin = TI.asin_dual
+    acos = TI.acos_dual
+    atan = TI.atan_dual
+    sinh = TI.sinh_dual
+    cosh = TI.cosh_dual
+    tanh = TI.tanh_dual
+    asinh = TI.asinh_dual
+    acosh = TI.acosh_dual
+    atanh = TI.atanh_dual
+
 newtype DualNum = DualNum { unDualNum :: TI.Dual_num }
     deriving newtype (Num, Fractional)
-
-convertFromF1 :: (TI.Dual_num -> TI.Dual_num) -> DualNum -> DualNum
-convertFromF1 f = \(DualNum d) -> DualNum (f d)
 
 convertToF1 :: (DualNum -> DualNum) -> TI.Dual_num -> TI.Dual_num
 convertToF1 f = \d -> unDualNum (f (DualNum d))
