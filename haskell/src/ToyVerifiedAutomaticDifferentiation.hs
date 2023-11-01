@@ -46,7 +46,7 @@ instance Floating TI.Dual_num where
     atanh = TI.atanh_dual
 
 newtype DualNum = DualNum { unDualNum :: TI.Dual_num }
-    deriving newtype (Num, Fractional)
+    deriving newtype (Num, Fractional, Floating)
 
 convertToF1 :: (DualNum -> DualNum) -> TI.Dual_num -> TI.Dual_num
 convertToF1 f = \d -> unDualNum (f (DualNum d))
