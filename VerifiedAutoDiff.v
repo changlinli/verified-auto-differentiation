@@ -165,6 +165,49 @@ Definition eval_value (f : dual_num -> dual_num) (x : R) : R :=
 Definition eval_derivative (f : dual_num -> dual_num) (x : R) : R :=
   dual_deriv (f (r_to_dual x)).
 
+(* Some theorems that are always true *)
+Lemma Ropp_flips_subtraction : forall x y : R, x - -y = x + y.
+  Proof.
+  intros.
+  unfold Rminus.
+  rewrite Ropp_involutive.
+  reflexivity.
+Qed.
+
+Lemma sin2_cos2_variation : forall x : R, cos x * cos x - - sin x * sin x = 1.
+Proof.
+  intros.
+  rewrite Ropp_mult_distr_l_reverse.
+  rewrite Ropp_flips_subtraction.
+  Search "Rplus".
+  rewrite Rplus_comm.
+  apply sin2_cos2.
+Qed.
+
+Theorem derivative_of_tan : forall x : R, cos x <> 0 -> derivative_at_point_is tan x (1 / (cos x) ^ 2).
+Proof.
+  intros x nonzero.
+  pose proof
+    (derivable_pt_lim_div
+      sin
+      cos
+      x
+      (cos x)
+      (- sin x)
+      (derivable_pt_lim_sin _)
+      (derivable_pt_lim_cos _)
+    ).
+  Search "sin".
+  unfold tan.
+  Search "derivable_lim_pt_plus".
+  rewrite sin2_cos2_variation in H.
+  apply H in nonzero as deriv.
+  unfold Rsqr in deriv.
+  unfold pow.
+  rewrite Rmult_1_r.
+  apply deriv.
+Qed.
+
 Module DifferentiableEverywhere.
 
   Inductive auto_diff_ast :=
@@ -174,8 +217,7 @@ Module DifferentiableEverywhere.
     | Subtract (x y : auto_diff_ast)
     | Multiply (x y : auto_diff_ast)
     | Sin (x : auto_diff_ast)
-    | Cos (x : auto_diff_ast)
-    | Tan (x : auto_diff_ast).
+    | Cos (x : auto_diff_ast).
 
 
   Fixpoint eval_ast_dual (ast : auto_diff_ast) (x : dual_num) : dual_num :=
@@ -187,7 +229,6 @@ Module DifferentiableEverywhere.
     | Multiply x_ast y_ast => multiply_dual (eval_ast_dual x_ast x) (eval_ast_dual y_ast x)
     | Sin x_ast => sin_dual (eval_ast_dual x_ast x)
     | Cos x_ast => cos_dual (eval_ast_dual x_ast x)
-    | Tan x_ast => tan_dual (eval_ast_dual x_ast x)
     end.
 
   Definition eval_ast_value (ast : auto_diff_ast) (x : R) : R :=
@@ -226,11 +267,14 @@ Module DifferentiableEverywhere.
     let f' := eval_derivative f_dual in
     forall x : R, differentiable_at f x -> derivative_at_point_is f x (f' x).
 
-  Theorem derivative_of_tan : forall x : R, derivative_at_point_is tan x (1 / (cos x) ^ 2).
-  Admitted.
-
   Theorem multiply_by_one_is_division : forall x c : R, x * (1 / c) = x / c.
-  Admitted.
+  Proof.
+  intros.
+  unfold Rdiv.
+  rewrite <- Rmult_assoc.
+  rewrite Rmult_1_r.
+  reflexivity.
+  Qed.
 
   Theorem auto_differentiate_is_correct :
     forall f : dual_num -> dual_num, is_well_formed f -> derivative_is_correct f.
@@ -299,17 +343,6 @@ Module DifferentiableEverywhere.
       pose proof (derivable_pt_lim_cos (eval_value (eval_ast_dual x) x0)) as cos_deriv.
       pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 cos_deriv) as chain_rule_deriv.
       rewrite Rmult_comm in chain_rule_deriv.
-      apply chain_rule_deriv.
-    - intros.
-      rewrite <- H.
-      simpl.
-      unfold derivative_is_correct.
-      intros.
-      pose proof (IHx (eval_ast_dual x) eq_refl x0).
-      pose proof (derivative_of_tan (eval_value (eval_ast_dual x) x0)) as tan_deriv.
-      pose proof (derivable_pt_lim_comp _ _ _ _ _ H0 tan_deriv) as chain_rule_deriv.
-      rewrite Rmult_comm in chain_rule_deriv.
-      rewrite multiply_by_one_is_division in chain_rule_deriv.
       apply chain_rule_deriv.
   Qed.
 
@@ -387,6 +420,14 @@ Module NotDifferentiableEverywhere.
     let f' := eval_derivative f_dual in
     derivative_at_point_is f x (f' x).
 
+  Lemma pull_out_successful_is_identity :
+    compose pull_out_result (fun x1 : dual_num => Successful x1) = fun x1 => x1.
+  Proof.
+  unfold compose.
+  unfold pull_out_result.
+  reflexivity.
+  Qed.
+
   Theorem auto_differentiate_is_correct :
     forall (f : dual_num -> dual_num) (x : R),
       has_ast_that_defines_derivative_at f x -> derivative_is_correct_at f x.
@@ -405,9 +446,7 @@ Module NotDifferentiableEverywhere.
     destruct H0.
     rewrite <- H.
     simpl.
-    assert (compose pull_out_result (fun x1 : dual_num => Successful x1) = fun x1 => x1).
-      { admit. }
-    rewrite H1.
+    rewrite pull_out_successful_is_identity.
     unfold eval_value.
     unfold eval_derivative.
     simpl.
